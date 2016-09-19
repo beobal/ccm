@@ -1457,6 +1457,8 @@ class Node(object):
         if self.cluster.partitioner:
             data['partitioner'] = self.cluster.partitioner
 
+        data['jmx_server_options']['jmx_port'] = self.jmx_port
+
         # Get a map of combined cluster and node configuration with the node
         # configuration taking precedence.
         full_options = common.merge_configuration(
@@ -1540,19 +1542,13 @@ class Node(object):
         if common.is_win() and self.get_base_cassandra_version() >= 2.1:
             conf_file = os.path.join(self.get_conf_dir(), common.CASSANDRA_WIN_ENV)
             jvm_file = os.path.join(self.get_conf_dir(), common.JVM_OPTS)
-            jmx_port_pattern = '^\s+\$JMX_PORT='
-            jmx_port_setting = '    $JMX_PORT="' + self.jmx_port + '"'
             if self.get_cassandra_version() < '3.2':
                 remote_debug_options = '    $env:JVM_OPTS="$env:JVM_OPTS {}"'.format(agentlib_setting)
         else:
             conf_file = os.path.join(self.get_conf_dir(), common.CASSANDRA_ENV)
             jvm_file = os.path.join(self.get_conf_dir(), common.JVM_OPTS)
-            jmx_port_pattern = 'JMX_PORT='
-            jmx_port_setting = 'JMX_PORT="' + self.jmx_port + '"'
             if self.get_cassandra_version() < '3.2':
                 remote_debug_options = 'JVM_OPTS="$JVM_OPTS {}"'.format(agentlib_setting)
-
-        common.replace_in_file(conf_file, jmx_port_pattern, jmx_port_setting)
 
         if common.is_win() and common.get_version_from_build(node_path=self.get_path()) >= '2.1':
             dst = os.path.join(self.get_conf_dir(), common.CASSANDRA_WIN_ENV)
