@@ -267,7 +267,7 @@ class Cluster(object):
                                     auto_bootstrap=False,
                                     thrift_interface=(ipformat % i, 9160),
                                     storage_interface=(ipformat % i, 7000),
-                                    jmx_port=str(7000 + i * 100),
+                                    jmx_port=7000 + i * 100,
                                     remote_debug_port=str(2000 + i * 100) if debug else str(0),
                                     byteman_port=str(4000 + i * 100) if install_byteman else str(0),
                                     initial_token=tk,

@@ -1229,7 +1229,7 @@ class Node(object):
             stress_options.append(self.address())
             # specify used jmx port if not already set
             if not [opt for opt in stress_options if opt.startswith('jmx=')]:
-                stress_options.extend(['-port', 'jmx=' + self.jmx_port])
+                stress_options.extend(['-port', 'jmx=' + str(self.jmx_port)])
         args = [stress] + stress_options
         try:
             p = subprocess.Popen(args, cwd=common.parse_path(stress),
@@ -1335,9 +1335,10 @@ class Node(object):
 
         # Change the nodes to separate jmx ports
         bin_dir = os.path.join(self.get_path(), 'bin')
-        jmx_port_pattern = "-Dcom.sun.management.jmxremote.port="
-        bat_file = os.path.join(bin_dir, "cassandra.bat")
-        common.replace_in_file(bat_file, jmx_port_pattern, " " + jmx_port_pattern + self.jmx_port + "^")
+        if self.get_base_cassandra_version() < 3.10:
+            jmx_port_pattern = "-Dcom.sun.management.jmxremote.port="
+            bat_file = os.path.join(bin_dir, "cassandra.bat")
+            common.replace_in_file(bat_file, jmx_port_pattern, " " + jmx_port_pattern + str(self.jmx_port) + "^")
 
         # Split binaries from conf
         home_pattern = "if NOT DEFINED CASSANDRA_HOME set CASSANDRA_HOME=%CD%"
@@ -1457,6 +1458,9 @@ class Node(object):
         if self.cluster.partitioner:
             data['partitioner'] = self.cluster.partitioner
 
+        if self.get_base_cassandra_version() >= 3.10:
+            data['jmx_server_options']['jmx_port'] = self.jmx_port
+
         # Get a map of combined cluster and node configuration with the node
         # configuration taking precedence.
         full_options = common.merge_configuration(
@@ -1541,18 +1545,19 @@ class Node(object):
             conf_file = os.path.join(self.get_conf_dir(), common.CASSANDRA_WIN_ENV)
             jvm_file = os.path.join(self.get_conf_dir(), common.JVM_OPTS)
             jmx_port_pattern = '^\s+\$JMX_PORT='
-            jmx_port_setting = '    $JMX_PORT="' + self.jmx_port + '"'
+            jmx_port_setting = '    $JMX_PORT="' + str(self.jmx_port) + '"'
             if self.get_cassandra_version() < '3.2':
                 remote_debug_options = '    $env:JVM_OPTS="$env:JVM_OPTS {}"'.format(agentlib_setting)
         else:
             conf_file = os.path.join(self.get_conf_dir(), common.CASSANDRA_ENV)
             jvm_file = os.path.join(self.get_conf_dir(), common.JVM_OPTS)
             jmx_port_pattern = 'JMX_PORT='
-            jmx_port_setting = 'JMX_PORT="' + self.jmx_port + '"'
+            jmx_port_setting = 'JMX_PORT="' + str(self.jmx_port) + '"'
             if self.get_cassandra_version() < '3.2':
                 remote_debug_options = 'JVM_OPTS="$JVM_OPTS {}"'.format(agentlib_setting)
 
-        common.replace_in_file(conf_file, jmx_port_pattern, jmx_port_setting)
+        if self.cluster.cassandra_version() < 3.10:
+            common.replace_in_file(conf_file, jmx_port_pattern, jmx_port_setting)
 
         if common.is_win() and common.get_version_from_build(node_path=self.get_path()) >= '2.1':
             dst = os.path.join(self.get_conf_dir(), common.CASSANDRA_WIN_ENV)
@@ -1813,7 +1818,8 @@ class Node(object):
         if self.get_base_cassandra_version() >= 2.1:
             sh_file = os.path.join(common.CASSANDRA_CONF_DIR, common.CASSANDRA_WIN_ENV)
             dst = os.path.join(self.get_path(), sh_file)
-            common.replace_in_file(dst, "^\s+\$JMX_PORT=", "    $JMX_PORT=\"" + self.jmx_port + "\"")
+            if self.get_base_cassandra_version() < 3.10:
+                common.replace_in_file(dst, "^\s+\$JMX_PORT=", "    $JMX_PORT=\"" + str(self.jmx_port) + "\"")
 
             # properly use single and double quotes to count for single quotes in the CASSANDRA_CONF path
             common.replace_in_file(
