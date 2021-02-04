@@ -1570,7 +1570,9 @@ class Node(object):
         self.nodetool("removeToken " + str(token))
 
     def import_config_files(self):
+        common.info("XXX Node {} entering import_config_files. initial_token={}".format(self.name, self.initial_token))
         self._update_config()
+        common.info("XXX Node {} after _update_config initial_token={}".format(self.name, self.initial_token))
         self.copy_config_files()
         self._update_yaml()
         self._update_topology_file()
@@ -1699,7 +1701,7 @@ class Node(object):
 
         with open(conf_file, 'r') as f:
             yaml_text = f.read()
-
+        common.info("XXX NODE {} in _update_yaml initial_token={}".format(self.name, self.initial_token))
         data['cluster_name'] = self.cluster.name
         data['auto_bootstrap'] = self.auto_bootstrap
         data['initial_token'] = self.initial_token
