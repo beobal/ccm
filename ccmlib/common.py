@@ -918,10 +918,10 @@ def _update_java_version(current_java_version, current_java_home_version,
     build_versions = [8]
     run_versions = [8]
 
-    info(
-        '{}: current_java_version={}, current_java_home_version={}, jvm_version={}, for_build={}, cassandra_version={}, install_dir={}, env={}'
-        .format(info_message, current_java_version, current_java_home_version, jvm_version, for_build,
-                cassandra_version, install_dir, env))
+    # info(
+    #     '{}: current_java_version={}, current_java_home_version={}, jvm_version={}, for_build={}, cassandra_version={}, install_dir={}, env={}'
+    #     .format(info_message, current_java_version, current_java_home_version, jvm_version, for_build,
+    #             cassandra_version, install_dir, env))
 
     # this won't work with DSE versions
     if cassandra_version >= '4.2':
